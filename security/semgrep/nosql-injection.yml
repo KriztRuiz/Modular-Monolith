@@ -1,0 +1,72 @@
+rules:
+  - id: nosql-direct-req-query
+    languages: [javascript, typescript]
+    message: "Posible inyección NoSQL: `req.query`/`req.body`/`req.params` pasado directamente a una consulta Mongoose. Valida o coerciona (ej. String(...)/zod.parse) antes de usar."
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: "$MODEL.find(req.query)"
+          - pattern: "$MODEL.find(req.body)"
+          - pattern: "$MODEL.find(req.params)"
+          - pattern: "$MODEL.findOne(req.query)"
+          - pattern: "$MODEL.findOne(req.body)"
+          - pattern: "$MODEL.findOne(req.params)"
+          - pattern: "$MODEL.findOneAndUpdate(req.query, ... )"
+          - pattern: "$MODEL.updateOne(req.query, ... )"
+      # Ignore common safe wrappers / coercions
+      - pattern-not: "$MODEL.find(String(req.query))"
+      - pattern-not: "$MODEL.find(String(req.body))"
+      - pattern-not: "$MODEL.find(String(req.params))"
+      - pattern-not: "$MODEL.find(String(req.query.$X))"
+      - pattern-not: "$MODEL.find(String(req.body.$X))"
+      - pattern-not: "$MODEL.find(String(req.params.$X))"
+      - pattern-not: "$MODEL.findOne(String(req.params.$X))"
+      - pattern-not: "$MODEL.findOne(String(req.query))"
+      - pattern-not: "$MODEL.findOne(String(req.body))"
+      - pattern-not: "$MODEL.findOne(String(req.query.$X))"
+      - pattern-not: "$MODEL.findOne(String(req.body.$X))"
+      - pattern-not: "$MODEL.find(JSON.parse(req.body))"
+      - pattern-not: "$MODEL.find(JSON.parse(req.query))"
+      - pattern-not: "$MODEL.find(JSON.parse(req.body.$X))"
+      - pattern-not: "$MODEL.find(JSON.parse(req.query.$X))"
+      - pattern-not: "$MODEL.find(schema.parse(req.query))"
+      - pattern-not: "$MODEL.find(schema.parse(req.body))"
+      - pattern-not: "$MODEL.find(schema.parse(req.params))"
+      - pattern-not: "$MODEL.find(schema.parse(req.query.$X))"
+      - pattern-not: "$MODEL.find(schema.parse(req.body.$X))"
+      - pattern-not: "$MODEL.find(schema.parse(req.params.$X))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.query))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.body))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.params))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.query.$X))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.body.$X))"
+      - pattern-not: "$MODEL.find(schema.safeParse(req.params.$X))"
+      - pattern-not: "$MODEL.find(zod.parse(req.query))"
+      - pattern-not: "$MODEL.find(zod.parse(req.body))"
+      - pattern-not: "$MODEL.find(zod.parse(req.params))"
+      - pattern-not: "$MODEL.find(Number(req.query.$X))"
+      - pattern-not: "$MODEL.find(Number(req.body.$X))"
+      - pattern-not: "$MODEL.find(parseInt(req.query.$X))"
+      - pattern-not: "$MODEL.find(parseFloat(req.query.$X))"
+      - pattern-not: "$MODEL.find(Number(req.query))"
+      - pattern-not: "$MODEL.find(Number(req.body))"
+      - pattern-not: "$MODEL.find(parseInt(req.query))"
+      - pattern-not: "$MODEL.find(parseFloat(req.query))"
+
+  - id: nosql-text-usage
+    languages: [javascript, typescript]
+    message: "Uso de $text en consultas MongoDB: asegúrate de que exista un índice text y valida `filters.q` antes de usarlo."
+    severity: WARNING
+    patterns:
+      - pattern: "$MODEL.find({ $text: $SEARCH })"
+      - pattern-not: "$MODEL.find({ $text: String($SEARCH) })"
+
+  - id: nosql-unsafe-regexp
+    languages: [javascript, typescript]
+    message: "Construcción de RegExp dinámica desde input: escapa el texto del usuario antes de construir una RegExp para evitar abusos y ReDoS."
+    severity: WARNING
+    patterns:
+      - pattern: "new RegExp($PATTERN)"
+      - pattern: "RegExp($PATTERN)"
+      - pattern-not: "new RegExp(String($PATTERN))"
+      - pattern-not: "RegExp(String($PATTERN))"

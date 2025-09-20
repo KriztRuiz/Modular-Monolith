@@ -1,0 +1,38 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: modular-mongo
+    ports:
+      - "27017:27017"        # expone para que puedas inspeccionar desde host
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.runCommand({ ping: 1 }).ok' | mongosh --quiet localhost:27017/test | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    image: node:20
+    container_name: modular-app
+    working_dir: /usr/src/app
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: "4000"
+      JWT_SECRET: super-secreto-cambia-esto
+      # ¡Importante! Dentro de la red de Docker la URL es "mongo", no "localhost".
+      MONGO_URL: "mongodb://mongo:27017/modular_monolith"
+    volumes:
+      - ./:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  mongo-data:
+  node_modules:

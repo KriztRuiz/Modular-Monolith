@@ -1,0 +1,37 @@
+.env
+.env.*
+node_modules/
+dist/
+dist-*/
+build/
+coverage/
+logs/
+*.log
+data/
+data/**
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+.DS_Store
+.vscode/
+.idea/
+/.cache/
+.sass-cache/
+.parcel-cache/
+/.next/
+.turbo/
+tmp/
+secrets/
+/*.local
+
+# Docker
+docker-compose.override.yml
+Dockerfile.dev
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# GitHub workflows generated artifacts
+.vercel

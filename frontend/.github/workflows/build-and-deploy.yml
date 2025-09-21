@@ -1,0 +1,43 @@
+# .github/workflows/build-and-deploy.yml
+name: build-and-deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend   # 👈 compila dentro de frontend/
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'     # 👈 clave para Vite 7
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Show Node version
+        run: node -v                  # debe imprimir v22.12.0
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      # (Opcional) despliegue a Vercel usando la acción oficial
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: frontend

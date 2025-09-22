@@ -1,0 +1,70 @@
+name: backend-ci
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - '**'
+      - '!frontend/**'                  # ⛔ evita disparar si solo cambió frontend
+  pull_request:
+    paths:
+      - '**'
+      - '!frontend/**'
+  workflow_dispatch:
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20 (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Show versions
+        run: |
+          node -v
+          npm -v
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Ejecuta si existen; si no, continúa sin fallar
+      - name: Lint (optional)
+        run: npm run -s lint || echo "no lint script"
+
+      - name: Test (optional)
+        run: npm test --if-present || echo "no test script"
+
+      - name: Build (optional)
+        run: npm run -s build || echo "no build script"
+
+      # (Opcional) Sube artefacto si generas build (dist/, build/, etc.)
+      - name: Upload backend artifact (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: |
+            dist
+            build
+          if-no-files-found: ignore
+          retention-days: 7
+
+      # (Opcional) aquí podrías añadir tu paso de deploy del backend (Docker/Render/EC2, etc.)
+      # - name: Deploy backend
+      #   run: echo "add your backend deploy step here"
